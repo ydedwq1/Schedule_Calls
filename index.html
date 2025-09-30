@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расписание звонков</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .current-time {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .location-info {
+            font-size: 1rem;
+            margin-top: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        .city-search {
+            margin: 15px auto;
+            max-width: 400px;
+        }
+        
+        .search-container {
+            position: relative;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .search-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .search-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 0 0 10px 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .suggestion-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .settings-info {
+            color: white;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+        
+        .timezone-warning {
+            background: rgba(255, 165, 0, 0.3);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px auto;
+            max-width: 500px;
+            font-size: 0.9rem;
+        }
+        
+        .popular-cities {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        
+        .city-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .city-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .notification-controls {
+            margin: 15px 0;
+        }
+        
+        .notification-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin: 0 5px;
+        }
+        
+        .notification-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .notification-btn.enabled {
+            background: rgba(76, 175, 80, 0.6);
+        }
+        
+        .notification-btn.disabled {
+            background: rgba(244, 67, 54, 0.6);
+        }
+        
+        .notification-status {
+            color: white;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .schedule-section {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .schedule-title {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #6a11cb;
+            color: #6a11cb;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            color: #6a11cb;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .time-tracker {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .tracker-title {
+            color: #6a11cb;
+            margin-bottom: 20px;
+        }
+        
+        .next-lesson {
+            font-size: 1.5rem;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f0f5ff;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .countdown {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #6a11cb;
+            margin: 15px 0;
+        }
+        
+        .current-status {
+            font-size: 1.2rem;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .lesson { background-color: #ffe6e6; }
+        .break { background-color: #e6ffe6; }
+        .finished { background-color: #f0f0f0; }
+        
+        footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .countdown {
+                font-size: 1.5rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 200px;
+            }
+            
+            .search-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Расписание звонков</h1>
+            <div class="current-time" id="current-time">Текущее время: --:--:--</div>
+            <div class="location-info" id="location-info">Выберите город для отображения времени</div>
+            
+            <div class="city-search">
+                <div class="search-container">
+                    <input type="text" id="city-input" class="search-input" placeholder="Введите название города..." list="city-suggestions">
+                    <button id="search-btn" class="search-btn">Найти</button>
+                    <datalist id="city-suggestions"></datalist>
+                </div>
+                <div class="popular-cities">
+                    <button class="city-btn" data-city="Москва">Москва</button>
+                    <button class="city-btn" data-city="Санкт-Петербург">Санкт-Петербург</button>
+                    <button class="city-btn" data-city="Новосибирск">Новосибирск</button>
+                    <button class="city-btn" data-city="Екатеринбург">Екатеринбург</button>
+                    <button class="city-btn" data-city="Казань">Казань</button>
+                    <button class="city-btn" data-city="Краснодар">Краснодар</button>
+                    <button class="city-btn" data-city="Абинск">Абинск</button>
+                </div>
+            </div>
+            
+            <div id="timezone-warning" class="timezone-warning" style="display: none;"></div>
+            
+            <div class="controls">
+                <button id="shorten-lessons" class="control-btn">Сократить уроки</button>
+                <button id="first-shift" class="control-btn active">1 смена</button>
+                <button id="second-shift" class="control-btn">2 смена</button>
+            </div>
+            
+            <div class="notification-controls">
+                <button id="enable-notifications" class="notification-btn">Включить уведомления</button>
+                <button id="test-notification" class="notification-btn">Тест уведомления</button>
+                <div class="notification-status" id="notification-status">Уведомления не разрешены</div>
+            </div>
+            
+            <div class="settings-info" id="settings-info">Настройки сохраняются автоматически</div>
+        </header>
+        
+        <div class="time-tracker">
+            <h2 class="tracker-title">Отслеживание времени</h2>
+            <div id="next-lesson" class="next-lesson">Загрузка...</div>
+            <div id="countdown" class="countdown">--:--:--</div>
+            <div id="current-status" class="current-status">Определение статуса...</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="schedule-section">
+                <h3 class="schedule-title">1 смена (понедельник, вторник)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Урок</th>
+                            <th>Начало</th>
+                            <th>Окончание</th>
+                            <th>Перемена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>08:00</td><td>08:40</td><td>00:10</td></tr>
+                        <tr><td>2</td><td>08:50</td><td>09:30</td><td>00:15</td></tr>
+                        <tr><td>3</td><td>09:45</td><td>10:25</td><td>00:15</td></tr>
+                        <tr><td>4</td><td>10:40</td><td>11:20</td><td>00:10</td></tr>
+                        <tr><td>5</td><td>11:30</td><td>12:10</td><td>00:05</td></tr>
+                        <tr><td>6</td><td>12:15</td><td>12:55</td><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="schedule-section">
+                <h3 class="schedule-title">1 смена ежедневное</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Урок</th>
+                            <th>Начало</th>
+                            <th>Окончание</th>
+                            <th>Перемена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>08:00</td><td>08:40</td><td>00:10</td></tr>
+                        <tr><td>2</td><td>08:50</td><td>09:30</td><td>00:15</td></tr>
+                        <tr><td>3</td><td>09:45</td><td>10:25</td><td>00:15</td></tr>
+                        <tr><td>4</td><td>10:40</td><td>11:20</td><td>00:15</td></tr>
+                        <tr><td>5</td><td>11:35</td><td>12:15</td><td>00:10</td></tr>
+                        <tr><td>6</td><td>12:25</td><td>13:05</td><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="schedule-section">
+                <h3 class="schedule-title">1 смена в субботу</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Урок</th>
+                            <th>Начало</th>
+                            <th>Окончание</th>
+                            <th>Перемена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>08:00</td><td>08:40</td><td>00:05</td></tr>
+                        <tr><td>2</td><td>08:45</td><td>09:25</td><td>00:10</td></tr>
+                        <tr><td>3</td><td>09:35</td><td>10:15</td><td>00:10</td></tr>
+                        <tr><td>4</td><td>10:25</td><td>11:05</td><td>00:10</td></tr>
+                        <tr><td>5</td><td>11:15</td><td>11:55</td><td>00:05</td></tr>
+                        <tr><td>6</td><td>12:00</td><td>12:40</td><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="schedule-section">
+                <h3 class="schedule-title">2 смена (понедельник)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Урок</th>
+                            <th>Начало</th>
+                            <th>Окончание</th>
+                            <th>Перемена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>13:00</td><td>13:40</td><td>00:10</td></tr>
+                        <tr><td>2</td><td>13:50</td><td>14:30</td><td>00:10</td></tr>
+                        <tr><td>3</td><td>14:40</td><td>15:20</td><td>00:05</td></tr>
+                        <tr><td>4</td><td>15:25</td><td>16:05</td><td>00:05</td></tr>
+                        <tr><td>5</td><td>16:10</td><td>16:50</td><td>00:05</td></tr>
+                        <tr><td>6</td><td>16:55</td><td>17:35</td><td>00:05</td></tr>
+                        <tr><td>7</td><td>17:40</td><td>18:20</td><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="schedule-section">
+                <h3 class="schedule-title">2 смена (ежедневное)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Урок</th>
+                            <th>Начало</th>
+                            <th>Окончание</th>
+                            <th>Перемена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>13:30</td><td>14:10</td><td>00:10</td></tr>
+                        <tr><td>2</td><td>14:20</td><td>15:00</td><td>00:10</td></tr>
+                        <tr><td>3</td><td>15:15</td><td>15:55</td><td>00:05</td></tr>
+                        <tr><td>4</td><td>16:00</td><td>16:40</td><td>00:05</td></tr>
+                        <tr><td>5</td><td>16:45</td><td>17:25</td><td>00:05</td></tr>
+                        <tr><td>6</td><td>17:30</td><td>18:10</td><td>00:05</td></tr>
+                        <tr><td>7</td><td>18:15</td><td>18:55</td><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2023 Расписание звонков | Все права защищены</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentTimeElement = document.getElementById('current-time');
+            const nextLessonElement = document.getElementById('next-lesson');
+            const countdownElement = document.getElementById('countdown');
+            const currentStatusElement = document.getElementById('current-status');
+            const shortenLessonsBtn = document.getElementById('shorten-lessons');
+            const firstShiftBtn = document.getElementById('first-shift');
+            const secondShiftBtn = document.getElementById('second-shift');
+            const settingsInfo = document.getElementById('settings-info');
+            const locationInfo = document.getElementById('location-info');
+            const cityInput = document.getElementById('city-input');
+            const searchBtn = document.getElementById('search-btn');
+            const timezoneWarning = document.getElementById('timezone-warning');
+            const citySuggestions = document.getElementById('city-suggestions');
+            const popularCities = document.querySelectorAll('.city-btn');
+            const enableNotificationsBtn = document.getElementById('enable-notifications');
+            const testNotificationBtn = document.getElementById('test-notification');
+            const notificationStatus = document.getElementById('notification-status');
+            
+            // Переменные для уведомлений
+            let notificationPermission = false;
+            let notificationsEnabled = false;
+            let lastNotificationTime = null;
+            const NOTIFICATION_COOLDOWN = 30000; // 30 секунд между уведомлениями
+            
+            // База данных городов и их часовых поясов
+            const citiesDatabase = {
+                'Москва': 'Europe/Moscow',
+                'Санкт-Петербург': 'Europe/Moscow',
+                'Новосибирск': 'Asia/Novosibirsk',
+                'Екатеринбург': 'Asia/Yekaterinburg',
+                'Казань': 'Europe/Moscow',
+                'Калининград': 'Europe/Kaliningrad',
+                'Нижний Новгород': 'Europe/Moscow',
+                'Самара': 'Europe/Samara',
+                'Омск': 'Asia/Omsk',
+                'Челябинск': 'Asia/Yekaterinburg',
+                'Ростов-на-Дону': 'Europe/Moscow',
+                'Уфа': 'Asia/Yekaterinburg',
+                'Волгоград': 'Europe/Volgograd',
+                'Красноярск': 'Asia/Krasnoyarsk',
+                'Пермь': 'Asia/Yekaterinburg',
+                'Воронеж': 'Europe/Moscow',
+                'Владивосток': 'Asia/Vladivostok',
+                'Иркутск': 'Asia/Irkutsk',
+                'Хабаровск': 'Asia/Vladivostok',
+                'Ярославль': 'Europe/Moscow',
+                'Томск': 'Asia/Tomsk',
+                'Оренбург': 'Asia/Yekaterinburg',
+                'Кемерово': 'Asia/Novokuznetsk',
+                'Новокузнецк': 'Asia/Novokuznetsk',
+                'Рязань': 'Europe/Moscow',
+                'Астрахань': 'Europe/Astrakhan',
+                'Пенза': 'Europe/Moscow',
+                'Липецк': 'Europe/Moscow',
+                'Киров': 'Europe/Kirov',
+                'Чебоксары': 'Europe/Moscow',
+                'Тула': 'Europe/Moscow',
+                'Курск': 'Europe/Moscow',
+                'Сочи': 'Europe/Moscow',
+                'Магнитогорск': 'Asia/Yekaterinburg',
+                'Тверь': 'Europe/Moscow',
+                'Иваново': 'Europe/Moscow',
+                'Брянск': 'Europe/Moscow',
+                'Белгород': 'Europe/Moscow',
+                'Сургут': 'Asia/Yekaterinburg',
+                'Владимир': 'Europe/Moscow',
+                'Архангельск': 'Europe/Moscow',
+                'Калуга': 'Europe/Moscow',
+                'Смоленск': 'Europe/Moscow',
+                'Саранск': 'Europe/Moscow',
+                'Череповец': 'Europe/Moscow',
+                'Вологда': 'Europe/Moscow',
+                'Якутск': 'Asia/Yakutsk',
+                'Петропавловск-Камчатский': 'Asia/Kamchatka',
+                'Краснодар': 'Europe/Moscow',
+                'Абинск': 'Europe/Moscow'
+            };
+            
+            // Переменные для управления временем
+            let timeOffset = 0;
+            let userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            let selectedCity = '';
+            let useCityTime = false;
+            
+            // Загружаем настройки из localStorage
+            let shortenedMode = localStorage.getItem('shortenedMode') === 'true';
+            let currentShift = localStorage.getItem('currentShift') || 'first';
+            let savedTimeOffset = localStorage.getItem('timeOffset');
+            let savedUseCityTime = localStorage.getItem('useCityTime');
+            let savedSelectedCity = localStorage.getItem('selectedCity');
+            let savedNotificationsEnabled = localStorage.getItem('notificationsEnabled') === 'true';
+            
+            if (savedTimeOffset) {
+                timeOffset = parseInt(savedTimeOffset);
+            }
+            if (savedUseCityTime) {
+                useCityTime = savedUseCityTime === 'true';
+            }
+            if (savedSelectedCity) {
+                selectedCity = savedSelectedCity;
+            }
+            if (savedNotificationsEnabled) {
+                notificationsEnabled = savedNotificationsEnabled;
+            }
+            
+            // Инициализация уведомлений
+            function initNotifications() {
+                // Проверяем поддержку уведомлений
+                if (!("Notification" in window)) {
+                    notificationStatus.textContent = "Браузер не поддерживает уведомления";
+                    enableNotificationsBtn.style.display = "none";
+                    testNotificationBtn.style.display = "none";
+                    return;
+                }
+                
+                // Проверяем текущий статус разрешения
+                if (Notification.permission === "granted") {
+                    notificationPermission = true;
+                    notificationStatus.textContent = "Уведомления разрешены";
+                    updateNotificationButton();
+                } else if (Notification.permission === "denied") {
+                    notificationPermission = false;
+                    notificationStatus.textContent = "Уведомления заблокированы";
+                    enableNotificationsBtn.textContent = "Уведомления заблокированы";
+                    enableNotificationsBtn.classList.add("disabled");
+                } else {
+                    notificationPermission = false;
+                    notificationStatus.textContent = "Уведомления не разрешены";
+                    updateNotificationButton();
+                }
+            }
+            
+            // Обновление кнопки уведомлений
+            function updateNotificationButton() {
+                if (notificationsEnabled) {
+                    enableNotificationsBtn.textContent = "Выключить уведомления";
+                    enableNotificationsBtn.classList.add("enabled");
+                    enableNotificationsBtn.classList.remove("disabled");
+                } else {
+                    enableNotificationsBtn.textContent = "Включить уведомления";
+                    enableNotificationsBtn.classList.remove("enabled");
+                    enableNotificationsBtn.classList.remove("disabled");
+                }
+            }
+            
+            // Запрос разрешения на уведомления
+            function requestNotificationPermission() {
+                if (!("Notification" in window)) {
+                    alert("Этот браузер не поддерживает уведомления");
+                    return;
+                }
+                
+                Notification.requestPermission().then(function(permission) {
+                    if (permission === "granted") {
+                        notificationPermission = true;
+                        notificationsEnabled = true;
+                        notificationStatus.textContent = "Уведомления разрешены и включены";
+                        saveSettings();
+                        updateNotificationButton();
+                        showTestNotification();
+                    } else {
+                        notificationPermission = false;
+                        notificationsEnabled = false;
+                        notificationStatus.textContent = "Уведомления не разрешены";
+                        saveSettings();
+                        updateNotificationButton();
+                    }
+                });
+            }
+            
+            // Показать тестовое уведомление
+            function showTestNotification() {
+                if (!notificationPermission) {
+                    alert("Сначала разрешите уведомления");
+                    return;
+                }
+                
+                const options = {
+                    body: "Это тестовое уведомление от расписания звонков",
+                    icon: "/favicon.ico", // Замените на путь к вашей иконке
+                    badge: "/favicon.ico",
+                    tag: "test-notification",
+                    requireInteraction: true
+                };
+                
+                if ("serviceWorker" in navigator) {
+                    navigator.serviceWorker.ready.then(function(registration) {
+                        registration.showNotification("Тест уведомления", options);
+                    });
+                } else {
+                    new Notification("Тест уведомления", options);
+                }
+            }
+            
+            // Показать уведомление о начале/конце урока
+            function showLessonNotification(title, message, lessonNumber = null) {
+                if (!notificationPermission || !notificationsEnabled) return;
+                
+                // Проверяем кулдаун, чтобы не спамить уведомлениями
+                const now = Date.now();
+                if (lastNotificationTime && (now - lastNotificationTime) < NOTIFICATION_COOLDOWN) {
+                    return;
+                }
+                
+                lastNotificationTime = now;
+                
+                const body = lessonNumber ? `${message} (Урок ${lessonNumber})` : message;
+                
+                const options = {
+                    body: body,
+                    icon: "/favicon.ico", // Замените на путь к вашей иконке
+                    badge: "/favicon.ico",
+                    tag: `lesson-${lessonNumber || 'general'}`,
+                    requireInteraction: false
+                };
+                
+                if ("serviceWorker" in navigator) {
+                    navigator.serviceWorker.ready.then(function(registration) {
+                        registration.showNotification(title, options);
+                    });
+                } else {
+                    new Notification(title, options);
+                }
+            }
+            
+            // Заполняем подсказки для поиска
+            function populateSuggestions() {
+                citySuggestions.innerHTML = '';
+                Object.keys(citiesDatabase).forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    citySuggestions.appendChild(option);
+                });
+            }
+            
+            // Функция для получения текущего времени с учетом смещения
+            function getCurrentTime() {
+                const now = new Date();
+                if (useCityTime && timeOffset !== 0) {
+                    // Применяем смещение времени
+                    const offsetMs = timeOffset * 60 * 1000;
+                    return new Date(now.getTime() + offsetMs);
+                }
+                return now;
+            }
+            
+            // Функция для получения информации о времени
+            function getTimeInfo() {
+                const now = getCurrentTime();
+                const localNow = new Date();
+                const timezone = useCityTime ? userTimezone : Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const offset = now.getTimezoneOffset();
+                const offsetHours = Math.abs(Math.floor(offset / 60));
+                const offsetMinutes = Math.abs(offset % 60);
+                const offsetSign = offset <= 0 ? '+' : '-';
+                
+                return {
+                    now: now,
+                    localNow: localNow,
+                    timezone: timezone,
+                    offset: offset,
+                    formattedOffset: `UTC${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMinutes.toString().padStart(2, '0')}`
+                };
+            }
+            
+            // Поиск города
+            function searchCity(cityName) {
+                const normalizedCity = cityName.trim();
+                
+                if (!normalizedCity) {
+                    locationInfo.textContent = 'Введите название города';
+                    return;
+                }
+                
+                if (citiesDatabase[normalizedCity]) {
+                    setCity(normalizedCity, citiesDatabase[normalizedCity]);
+                } else {
+                    // Попробуем найти похожий город
+                    const foundCity = Object.keys(citiesDatabase).find(city => 
+                        city.toLowerCase().includes(normalizedCity.toLowerCase())
+                    );
+                    
+                    if (foundCity) {
+                        setCity(foundCity, citiesDatabase[foundCity]);
+                    } else {
+                        locationInfo.textContent = 'Город не найден в базе данных';
+                    }
+                }
+            }
+            
+            // Установка выбранного города
+            function setCity(cityName, timezone) {
+                selectedCity = cityName;
+                userTimezone = timezone;
+                
+                // Вычисляем разницу между локальным временем и временем целевого пояса
+                const localTime = new Date();
+                const targetTime = new Date(localTime.toLocaleString("en-US", {timeZone: timezone}));
+                timeOffset = (targetTime - localTime) / (60 * 1000);
+                
+                useCityTime = true;
+                saveSettings();
+                
+                const timeInfo = getTimeInfo();
+                locationInfo.textContent = `Город: ${selectedCity} | Часовой пояс: ${timeInfo.timezone} (${timeInfo.formattedOffset})`;
+                showTimezoneWarning();
+                
+                updateTime();
+            }
+            
+            // Использование локального времени
+            function useLocalTime() {
+                useCityTime = false;
+                timeOffset = 0;
+                selectedCity = '';
+                saveSettings();
+                
+                const timeInfo = getTimeInfo();
+                locationInfo.textContent = `Локальное время: ${timeInfo.timezone} (${timeInfo.formattedOffset})`;
+                timezoneWarning.style.display = 'none';
+                
+                updateTime();
+            }
+            
+            // Показ предупреждения о часовом поясе
+            function showTimezoneWarning() {
+                if (useCityTime && timeOffset !== 0) {
+                    const timeInfo = getTimeInfo();
+                    const diffHours = Math.abs(timeOffset / 60);
+                    timezoneWarning.textContent = `Внимание: Используется время для ${selectedCity}. Время отличается от локального на ${diffHours} часов.`;
+                    timezoneWarning.style.display = 'block';
+                } else {
+                    timezoneWarning.style.display = 'none';
+                }
+            }
+            
+            // Применяем сохраненные настройки
+            function applySavedSettings() {
+                // Применяем режим сокращенных уроков
+                shortenLessonsBtn.classList.toggle('active', shortenedMode);
+                shortenLessonsBtn.textContent = shortenedMode ? 'Обычные уроки' : 'Сократить уроки';
+                
+                // Применяем выбранную смену
+                firstShiftBtn.classList.toggle('active', currentShift === 'first');
+                secondShiftBtn.classList.toggle('active', currentShift === 'second');
+                
+                // Применяем настройки уведомлений
+                updateNotificationButton();
+                
+                // Обновляем информацию о времени
+                const timeInfo = getTimeInfo();
+                if (useCityTime && selectedCity) {
+                    locationInfo.textContent = `Город: ${selectedCity} | Часовой пояс: ${timeInfo.timezone} (${timeInfo.formattedOffset})`;
+                    showTimezoneWarning();
+                } else {
+                    locationInfo.textContent = `Локальное время: ${timeInfo.timezone} (${timeInfo.formattedOffset})`;
+                }
+                
+                // Показываем сообщение о загрузке настроек
+                showSettingsInfo('Настройки загружены');
+            }
+            
+            // Сохраняем настройки в localStorage
+            function saveSettings() {
+                localStorage.setItem('shortenedMode', shortenedMode);
+                localStorage.setItem('currentShift', currentShift);
+                localStorage.setItem('timeOffset', timeOffset);
+                localStorage.setItem('useCityTime', useCityTime);
+                localStorage.setItem('selectedCity', selectedCity);
+                localStorage.setItem('notificationsEnabled', notificationsEnabled);
+                showSettingsInfo('Настройки сохранены');
+            }
+            
+            // Показываем временное сообщение
+            function showSettingsInfo(message) {
+                settingsInfo.textContent = message;
+                setTimeout(() => {
+                    settingsInfo.textContent = 'Настройки сохраняются автоматически';
+                }, 2000);
+            }
+            
+            // Обработчики кнопок
+            shortenLessonsBtn.addEventListener('click', function() {
+                shortenedMode = !shortenedMode;
+                this.classList.toggle('active', shortenedMode);
+                this.textContent = shortenedMode ? 'Обычные уроки' : 'Сократить уроки';
+                saveSettings();
+                updateTime();
+            });
+            
+            firstShiftBtn.addEventListener('click', function() {
+                currentShift = 'first';
+                firstShiftBtn.classList.add('active');
+                secondShiftBtn.classList.remove('active');
+                saveSettings();
+                updateTime();
+            });
+            
+            secondShiftBtn.addEventListener('click', function() {
+                currentShift = 'second';
+                secondShiftBtn.classList.add('active');
+                firstShiftBtn.classList.remove('active');
+                saveSettings();
+                updateTime();
+            });
+            
+            // Обработчики уведомлений
+            enableNotificationsBtn.addEventListener('click', function() {
+                if (notificationPermission && notificationsEnabled) {
+                    // Отключаем уведомления
+                    notificationsEnabled = false;
+                    notificationStatus.textContent = "Уведомления выключены";
+                } else if (notificationPermission && !notificationsEnabled) {
+                    // Включаем уведомления
+                    notificationsEnabled = true;
+                    notificationStatus.textContent = "Уведомления включены";
+                } else {
+                    // Запрашиваем разрешение
+                    requestNotificationPermission();
+                    return;
+                }
+                
+                saveSettings();
+                updateNotificationButton();
+            });
+            
+            testNotificationBtn.addEventListener('click', showTestNotification);
+            
+            // Обработчики поиска города
+            searchBtn.addEventListener('click', function() {
+                searchCity(cityInput.value);
+            });
+            
+            cityInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchCity(cityInput.value);
+                }
+            });
+            
+            // Обработчики популярных городов
+            popularCities.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const city = this.getAttribute('data-city');
+                    searchCity(city);
+                });
+            });
+            
+            // Инициализация
+            populateSuggestions();
+            initNotifications();
+            applySavedSettings();
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Функция обновления времени
+            function updateTime() {
+                const timeInfo = getTimeInfo();
+                const now = timeInfo.now;
+                
+                // Обновляем текущее время
+                const timeString = now.toLocaleTimeString();
+                currentTimeElement.textContent = `Текущее время: ${timeString}`;
+                
+                // Получаем расписание для текущего дня и смены
+                const schedule = getCurrentSchedule(now);
+                
+                // Определяем текущий статус (урок, перемена, завершено)
+                const currentStatus = getCurrentStatus(now, schedule);
+                
+                // Обновляем отображение статуса
+                updateStatusDisplay(currentStatus);
+                
+                // Обновляем отсчет времени до следующего события
+                updateCountdown(now, currentStatus, schedule);
+                
+                // Проверяем, нужно ли показать уведомление
+                checkForNotifications(now, currentStatus, schedule);
+            }
+            
+            // Получаем расписание для текущего дня и смены
+            function getCurrentSchedule(now) {
+                const dayOfWeek = now.getDay(); // 0 - воскресенье, 1 - понедельник, ..., 6 - суббота
+                const isSaturday = dayOfWeek === 6;
+                
+                if (currentShift === 'first') {
+                    if (isSaturday) {
+                        return getFirstShiftSaturdaySchedule();
+                    } else {
+                        return getFirstShiftSchedule(dayOfWeek);
+                    }
+                } else {
+                    return getSecondShiftSchedule(dayOfWeek);
+                }
+            }
+            
+            // Расписание для 1 смены (понедельник, вторник)
+            function getFirstShiftSchedule(dayOfWeek) {
+                if (dayOfWeek === 1 || dayOfWeek === 2) { // Понедельник, вторник
+                    return [
+                        { number: 1, start: timeToMinutes('08:00'), end: timeToMinutes('08:40'), break: 10 },
+                        { number: 2, start: timeToMinutes('08:50'), end: timeToMinutes('09:30'), break: 15 },
+                        { number: 3, start: timeToMinutes('09:45'), end: timeToMinutes('10:25'), break: 15 },
+                        { number: 4, start: timeToMinutes('10:40'), end: timeToMinutes('11:20'), break: 10 },
+                        { number: 5, start: timeToMinutes('11:30'), end: timeToMinutes('12:10'), break: 5 },
+                        { number: 6, start: timeToMinutes('12:15'), end: timeToMinutes('12:55'), break: 0 }
+                    ];
+                } else {
+                    // Ежедневное расписание для остальных дней
+                    return [
+                        { number: 1, start: timeToMinutes('08:00'), end: timeToMinutes('08:40'), break: 10 },
+                        { number: 2, start: timeToMinutes('08:50'), end: timeToMinutes('09:30'), break: 15 },
+                        { number: 3, start: timeToMinutes('09:45'), end: timeToMinutes('10:25'), break: 15 },
+                        { number: 4, start: timeToMinutes('10:40'), end: timeToMinutes('11:20'), break: 15 },
+                        { number: 5, start: timeToMinutes('11:35'), end: timeToMinutes('12:15'), break: 10 },
+                        { number: 6, start: timeToMinutes('12:25'), end: timeToMinutes('13:05'), break: 0 }
+                    ];
+                }
+            }
+            
+            // Расписание для 1 смены в субботу
+            function getFirstShiftSaturdaySchedule() {
+                return [
+                    { number: 1, start: timeToMinutes('08:00'), end: timeToMinutes('08:40'), break: 5 },
+                    { number: 2, start: timeToMinutes('08:45'), end: timeToMinutes('09:25'), break: 10 },
+                    { number: 3, start: timeToMinutes('09:35'), end: timeToMinutes('10:15'), break: 10 },
+                    { number: 4, start: timeToMinutes('10:25'), end: timeToMinutes('11:05'), break: 10 },
+                    { number: 5, start: timeToMinutes('11:15'), end: timeToMinutes('11:55'), break: 5 },
+                    { number: 6, start: timeToMinutes('12:00'), end: timeToMinutes('12:40'), break: 0 }
+                ];
+            }
+            
+            // Расписание для 2 смены
+            function getSecondShiftSchedule(dayOfWeek) {
+                if (dayOfWeek === 1) { // Понедельник
+                    return [
+                        { number: 1, start: timeToMinutes('13:00'), end: timeToMinutes('13:40'), break: 10 },
+                        { number: 2, start: timeToMinutes('13:50'), end: timeToMinutes('14:30'), break: 10 },
+                        { number: 3, start: timeToMinutes('14:40'), end: timeToMinutes('15:20'), break: 5 },
+                        { number: 4, start: timeToMinutes('15:25'), end: timeToMinutes('16:05'), break: 5 },
+                        { number: 5, start: timeToMinutes('16:10'), end: timeToMinutes('16:50'), break: 5 },
+                        { number: 6, start: timeToMinutes('16:55'), end: timeToMinutes('17:35'), break: 5 },
+                        { number: 7, start: timeToMinutes('17:40'), end: timeToMinutes('18:20'), break: 0 }
+                    ];
+                } else {
+                    // Ежедневное расписание для остальных дней
+                    return [
+                        { number: 1, start: timeToMinutes('13:30'), end: timeToMinutes('14:10'), break: 10 },
+                        { number: 2, start: timeToMinutes('14:20'), end: timeToMinutes('15:00'), break: 15 },
+                        { number: 3, start: timeToMinutes('15:15'), end: timeToMinutes('15:55'), break: 5 },
+                        { number: 4, start: timeToMinutes('16:00'), end: timeToMinutes('16:40'), break: 5 },
+                        { number: 5, start: timeToMinutes('16:45'), end: timeToMinutes('17:25'), break: 5 },
+                        { number: 6, start: timeToMinutes('17:30'), end: timeToMinutes('18:10'), break: 5 },
+                        { number: 7, start: timeToMinutes('18:15'), end: timeToMinutes('18:55'), break: 0 }
+                    ];
+                }
+            }
+            
+            // Преобразование времени в минуты
+            function timeToMinutes(timeString) {
+                const [hours, minutes] = timeString.split(':').map(Number);
+                return hours * 60 + minutes;
+            }
+            
+            // Преобразование минут в строку времени
+            function minutesToTime(minutes) {
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+            }
+            
+            // Определение текущего статуса
+            function getCurrentStatus(now, schedule) {
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                const currentSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                
+                // Проверяем, идет ли сейчас урок
+                for (const lesson of schedule) {
+                    const lessonStartSeconds = lesson.start * 60;
+                    const lessonEndSeconds = lesson.end * 60;
+                    
+                    if (currentSeconds >= lessonStartSeconds && currentSeconds < lessonEndSeconds) {
+                        const timeLeft = lessonEndSeconds - currentSeconds;
+                        return {
+                            type: 'lesson',
+                            lessonNumber: lesson.number,
+                            timeLeft: timeLeft,
+                            totalDuration: (lesson.end - lesson.start) * 60
+                        };
+                    }
+                }
+                
+                // Проверяем, идет ли перемена
+                for (let i = 0; i < schedule.length - 1; i++) {
+                    const currentLesson = schedule[i];
+                    const nextLesson = schedule[i + 1];
+                    
+                    const breakStartSeconds = currentLesson.end * 60;
+                    const breakEndSeconds = nextLesson.start * 60;
+                    
+                    if (currentSeconds >= breakStartSeconds && currentSeconds < breakEndSeconds) {
+                        const timeLeft = breakEndSeconds - currentSeconds;
+                        return {
+                            type: 'break',
+                            nextLessonNumber: nextLesson.number,
+                            timeLeft: timeLeft,
+                            totalDuration: (nextLesson.start - currentLesson.end) * 60
+                        };
+                    }
+                }
+                
+                // Проверяем, завершены ли уроки на сегодня
+                const lastLesson = schedule[schedule.length - 1];
+                if (currentMinutes >= lastLesson.end) {
+                    return {
+                        type: 'finished',
+                        message: 'Уроки на сегодня завершены'
+                    };
+                }
+                
+                // Если до начала первого урока
+                const firstLesson = schedule[0];
+                if (currentMinutes < firstLesson.start) {
+                    const timeLeft = (firstLesson.start * 60) - currentSeconds;
+                    return {
+                        type: 'before',
+                        nextLessonNumber: firstLesson.number,
+                        timeLeft: timeLeft
+                    };
+                }
+                
+                return {
+                    type: 'unknown',
+                    message: 'Статус не определен'
+                };
+            }
+            
+            // Обновление отображения статуса
+            function updateStatusDisplay(status) {
+                switch (status.type) {
+                    case 'lesson':
+                        currentStatusElement.textContent = `Идет урок ${status.lessonNumber}`;
+                        currentStatusElement.className = 'current-status lesson';
+                        break;
+                    case 'break':
+                        currentStatusElement.textContent = `Перемена перед уроком ${status.nextLessonNumber}`;
+                        currentStatusElement.className = 'current-status break';
+                        break;
+                    case 'finished':
+                        currentStatusElement.textContent = status.message;
+                        currentStatusElement.className = 'current-status finished';
+                        break;
+                    case 'before':
+                        currentStatusElement.textContent = `До начала урока ${status.nextLessonNumber}`;
+                        currentStatusElement.className = 'current-status finished';
+                        break;
+                    default:
+                        currentStatusElement.textContent = status.message;
+                        currentStatusElement.className = 'current-status finished';
+                }
+            }
+            
+            // Обновление отсчета времени
+            function updateCountdown(now, status, schedule) {
+                switch (status.type) {
+                    case 'lesson':
+                        nextLessonElement.textContent = `Урок ${status.lessonNumber} завершится через:`;
+                        countdownElement.textContent = formatTime(status.timeLeft);
+                        break;
+                    case 'break':
+                        nextLessonElement.textContent = `Урок ${status.nextLessonNumber} начнется через:`;
+                        countdownElement.textContent = formatTime(status.timeLeft);
+                        break;
+                    case 'finished':
+                        nextLessonElement.textContent = status.message;
+                        countdownElement.textContent = '00:00:00';
+                        break;
+                    case 'before':
+                        nextLessonElement.textContent = `До начала урока ${status.nextLessonNumber}:`;
+                        countdownElement.textContent = formatTime(status.timeLeft);
+                        break;
+                    default:
+                        nextLessonElement.textContent = 'Расписание на сегодня завершено';
+                        countdownElement.textContent = '00:00:00';
+                }
+            }
+            
+            // Проверка необходимости показа уведомлений
+            function checkForNotifications(now, status, schedule) {
+                if (!notificationPermission || !notificationsEnabled) return;
+                
+                const currentSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                
+                // Проверяем начало уроков
+                schedule.forEach(lesson => {
+                    const lessonStartSeconds = lesson.start * 60;
+                    const timeDiff = lessonStartSeconds - currentSeconds;
+                    
+                    // Уведомление за 1 минуту до начала урока
+                    if (timeDiff === 60) {
+                        showLessonNotification(
+                            "Скоро начало урока", 
+                            `Урок ${lesson.number} начнется через 1 минуту`,
+                            lesson.number
+                        );
+                    }
+                    
+                    // Уведомление о начале урока
+                    if (timeDiff === 0) {
+                        showLessonNotification(
+                            "Начало урока", 
+                            `Урок ${lesson.number} начался`,
+                            lesson.number
+                        );
+                    }
+                });
+                
+                // Проверяем конец уроков
+                schedule.forEach(lesson => {
+                    const lessonEndSeconds = lesson.end * 60;
+                    const timeDiff = lessonEndSeconds - currentSeconds;
+                    
+                    // Уведомление за 1 минуту до конца урока
+                    if (timeDiff === 60) {
+                        showLessonNotification(
+                            "Скоро конец урока", 
+                            `Урок ${lesson.number} завершится через 1 минуту`,
+                            lesson.number
+                        );
+                    }
+                    
+                    // Уведомление о конце урока
+                    if (timeDiff === 0) {
+                        showLessonNotification(
+                            "Конец урока", 
+                            `Урок ${lesson.number} завершился`,
+                            lesson.number
+                        );
+                    }
+                });
+            }
+            
+            // Форматирование времени для отсчета
+            function formatTime(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+        });
+    </script>
+</body>
+</html>
